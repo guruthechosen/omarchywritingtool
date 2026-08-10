@@ -250,7 +250,7 @@ Prefer **Option B** for new setups — it's a fraction of the footprint and does
 
 ## 5. Test it
 
-1. Open any app where you can select text — a browser, editor, terminal, chat app.
+1. Open any app where you can select text — a browser, editor, terminal, chat app. (For your first test, avoid LibreOffice — see the note below.)
 2. Select a sentence or paragraph.
 3. Press **`Super + H`**.
 4. A walker popup appears with three options: **Translate** / **Proofread** / **Correct**. Pick one (arrow keys + Enter, or click).
@@ -262,6 +262,8 @@ Prefer **Option B** for new setups — it's a fraction of the footprint and does
 8. Return to your app, press `Ctrl+V` (or `Ctrl+Shift+V` in terminals) to paste the result.
 
 If nothing happens at step 3, see [Troubleshooting in README.md](README.md#troubleshooting).
+
+> **LibreOffice:** selecting text there and pressing `Super + H` won't pick it up — LibreOffice claims the primary selection but serves no content for it. Press **`Ctrl+C` first**, then `Super + H`. The review window will label the text *"Original (from clipboard)"* so you always know which source was used. Details in [README](README.md#libreoffice-and-other-apps-that-dont-publish-selections).
 
 ---
 

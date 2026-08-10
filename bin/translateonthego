@@ -48,12 +48,31 @@ SCRIPT_PATH="$(readlink -f "$0")"
 BIN_DIR="$(dirname "$SCRIPT_PATH")"
 PROJ_DIR="$(dirname "$BIN_DIR")"
 
-TEXT="$(wl-paste -p 2>/dev/null || true)"
+# Ask for text/plain explicitly first. Some apps (LibreOffice, browsers)
+# advertise text/html ahead of plain text, and wl-paste's default pick would
+# hand back markup instead of the words the user selected.
+grab() {
+  local args=("$@")
+  local out
+  out="$(wl-paste "${args[@]}" -t text/plain --no-newline 2>/dev/null || true)"
+  [[ -z "$out" ]] && out="$(wl-paste "${args[@]}" --no-newline 2>/dev/null || true)"
+  printf '%s' "$out"
+}
+
+TEXT="$(grab -p)"
+SOURCE="selection"
+
 if [[ -z "$TEXT" ]]; then
-  TEXT="$(wl-paste 2>/dev/null || true)"
+  # Nothing owns PRIMARY. Falling back to the clipboard is usually right, but
+  # the clipboard may hold something copied hours ago — say so rather than
+  # silently translating the wrong text.
+  TEXT="$(grab)"
+  SOURCE="clipboard"
 fi
+
 if [[ -z "$TEXT" ]]; then
-  notify-send "TranslateOnTheGo" "No text selected or on clipboard."
+  notify-send "TranslateOnTheGo" \
+    "Nothing to work on — no active selection and the clipboard is empty."
   exit 0
 fi
 
@@ -103,5 +122,6 @@ rm -f "$ERR_FILE"
 trap - EXIT
 exec python3 "$PROJ_DIR/bin/tot-review.py" \
   --action "$ACTION" \
+  --source "$SOURCE" \
   --original-file "$ORIG_FILE" \
   --result-file "$RESULT_FILE"

@@ -36,9 +36,10 @@ def notify(body: str, urgency: str = "normal", timeout_ms: int = 2500) -> None:
 
 
 class ReviewWindow(Gtk.ApplicationWindow):
-    def __init__(self, app, action, original, result):
+    def __init__(self, app, action, original, result, source="selection"):
         super().__init__(application=app, title=f"TranslateOnTheGo — {action}")
         self.set_default_size(720, 520)
+        self.source = source
 
         main = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=8)
         main.set_margin_top(10)
@@ -47,7 +48,26 @@ class ReviewWindow(Gtk.ApplicationWindow):
         main.set_margin_end(12)
         self.set_child(main)
 
-        main.append(self._label("Original", dim=True))
+        if source == "clipboard":
+            # PRIMARY was empty, so this text came from the clipboard and may be
+            # stale. Make that obvious — otherwise a wrong result looks like a
+            # bad translation rather than the wrong input.
+            warn = Gtk.Label(
+                label="No active selection was detected — this is your clipboard "
+                      "contents, which may not be what you just highlighted. "
+                      "Some apps (e.g. LibreOffice) don't publish selections; "
+                      "press Ctrl+C first, then retry.",
+                xalign=0,
+                wrap=True,
+            )
+            warn.add_css_class("warning")
+            warn.set_margin_bottom(4)
+            main.append(warn)
+            origin_label = "Original (from clipboard)"
+        else:
+            origin_label = "Original (from selection)"
+
+        main.append(self._label(origin_label, dim=True))
         main.append(self._scrolled(self._textview(original, editable=False), 120))
 
         main.append(self._label(f"{action} Result (editable)", dim=True))
@@ -138,13 +158,15 @@ class App(Gtk.Application):
     def do_activate(self):
         original = read_file(self.args.original_file)
         result = read_file(self.args.result_file)
-        win = ReviewWindow(self, self.args.action, original, result)
+        win = ReviewWindow(self, self.args.action, original, result, self.args.source)
         win.present()
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--action", required=True)
+    ap.add_argument("--source", default="selection",
+                    choices=("selection", "clipboard"))
     ap.add_argument("--original-file", required=True)
     ap.add_argument("--result-file", required=True)
     args = ap.parse_args()

@@ -14,7 +14,7 @@ No right-click menus on Wayland — so a Hyprland keybind is the closest idiom. 
 
 ## Features
 
-- **Global trigger** via Hyprland keybind (`Super + H` by default) over your PRIMARY selection. Falls back to clipboard if nothing is selected.
+- **Global trigger** via Hyprland keybind (`Super + H` by default) over your PRIMARY selection. Falls back to the clipboard when no selection is available — and tells you when it did, so a stale clipboard never masquerades as your selection. (See [LibreOffice](#libreoffice-and-other-apps-that-dont-publish-selections).)
 - **Three actions** via [walker](https://github.com/abenz1267/walker) dmenu:
   - **Translate** — translate to your target language (Korean by default). If already in that language, translates to English.
   - **Proofread** — improve grammar, clarity, flow, naturalness. Keeps original language and tone.
@@ -152,7 +152,7 @@ Sizes are quantized download sizes from <https://ollama.com/library> and drift o
 
 ## Usage
 
-1. Select text in any app (terminal, browser, editor — anywhere PRIMARY selection works).
+1. Select text in any app (terminal, browser, editor). A few apps — LibreOffice notably — don't publish selections; there, press `Ctrl+C` first. See [below](#libreoffice-and-other-apps-that-dont-publish-selections).
 2. Press **`Super + H`**.
 3. Walker pops up — pick **Translate**, **Proofread**, or **Correct**.
 4. Review window appears. Original on top, editable result below. Tweak if desired.
@@ -213,7 +213,32 @@ See [UNINSTALL.md](UNINSTALL.md) for a complete revert guide.
 - **Local answers are slow / CPU fans spin up** — the model didn't fit in VRAM and spilled onto the CPU. Check with `tot-llm status`, then pick a smaller tag or lower `OLLAMA_NUM_CTX`.
 - **"does not support thinking"** — `OLLAMA_NO_THINK="true"` was set for a model without a reasoning mode. Set it back to `"false"`.
 - **"LM Studio unreachable at ..."** — LM Studio's local server isn't running. Start it from LM Studio → Developer → Start Server. Verify with `curl http://localhost:1234/v1/models`.
-- **"No text selected or on clipboard"** — Some apps don't populate PRIMARY selection. Copy with `Ctrl+C` first, then trigger.
+- **"Nothing to work on"** — no app owns the PRIMARY selection and the clipboard is empty. Copy with `Ctrl+C` first, then trigger.
+- **The review window says "from clipboard" and shows the wrong text** — nothing published a selection, so it fell back to whatever you last copied. See below.
+
+### LibreOffice, and other apps that don't publish selections
+
+**Workaround: press `Ctrl+C` first, then `Super + H`.** The clipboard path works perfectly from LibreOffice.
+
+Selecting text in LibreOffice and hitting the keybind won't pick it up. This is a LibreOffice-side limitation, not something this tool can work around: LibreOffice *does* claim ownership of the Wayland primary selection and advertises 13 formats for it (`text/plain`, `text/plain;charset=utf-8`, `UTF8_STRING`, `text/html`, `text/rtf`, …) — but every one of them serves **zero bytes**.
+
+Verified on LibreOffice 26.2 (`libreoffice-fresh`), gtk3 VCL backend, native Wayland (not XWayland), Hyprland:
+
+```console
+$ wl-paste -p --list-types        # 13 types offered, while a sentence is selected
+text/plain
+text/plain;charset=utf-8
+UTF8_STRING
+...
+$ wl-paste -p -t text/plain | wc -c
+0
+```
+
+There is no text to retrieve, so no amount of MIME-type negotiation helps. The tool asks for `text/plain` explicitly and falls back through the other offers; they're all empty.
+
+The review window shows a warning banner and labels the source **"Original (from clipboard)"** whenever this happens, so you can tell a wrong *input* from a bad *translation*. Earlier versions silently translated your stale clipboard and looked confident about it.
+
+If you hit this with another app, the same `Ctrl+C` workaround applies.
 - **Walker doesn't appear** — Confirm `walker` is installed and runnable: `walker -v`.
 - **API error toast** — Check your key, quota, and network. The Gemini error message is shown in the notification.
 
