@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/translateonthego"
+CONFIG="$CONFIG_DIR/config"
+if [[ -f "$CONFIG" ]]; then
+  # shellcheck disable=SC1090
+  if ! source "$CONFIG" 2>/tmp/tot-config-err; then
+    notify-send -u critical "TranslateOnTheGo" \
+      "Config parse error in $CONFIG: $(cat /tmp/tot-config-err)"
+    exit 1
+  fi
+fi
+
+MODEL="${MODEL:-gemini-3.5-flash-lite}"
+TARGET_LANG="${TARGET_LANG:-Korean}"
+PROVIDER="${PROVIDER:-gemini}"
+
+FALLBACK_ENABLED="${FALLBACK_ENABLED:-true}"
+
+# Set by any provider that talks to a server on this machine — those are the
+# ones worth falling back to Gemini for when their server isn't running.
+IS_LOCAL=0
+
+case "$PROVIDER" in
+  gemini)
+    if [[ -z "${GEMINI_API_KEY:-}" ]]; then
+      notify-send -u critical "TranslateOnTheGo" "GEMINI_API_KEY not set. Export it in your shell env or config."
+      exit 1
+    fi
+    PROVIDER_SCRIPT="lib/gemini.sh"
+    ;;
+  ollama)
+    PROVIDER_SCRIPT="lib/ollama.sh"
+    IS_LOCAL=1
+    ;;
+  lmstudio)
+    PROVIDER_SCRIPT="lib/lmstudio.sh"
+    IS_LOCAL=1
+    ;;
+  *)
+    notify-send -u critical "TranslateOnTheGo" "Unknown PROVIDER '$PROVIDER' in config. Use 'gemini', 'ollama', or 'lmstudio'."
+    exit 1
+    ;;
+esac
+
+SCRIPT_PATH="$(readlink -f "$0")"
+BIN_DIR="$(dirname "$SCRIPT_PATH")"
+PROJ_DIR="$(dirname "$BIN_DIR")"
+
+TEXT="$(wl-paste -p 2>/dev/null || true)"
+if [[ -z "$TEXT" ]]; then
+  TEXT="$(wl-paste 2>/dev/null || true)"
+fi
+if [[ -z "$TEXT" ]]; then
+  notify-send "TranslateOnTheGo" "No text selected or on clipboard."
+  exit 0
+fi
+
+ACTION="$(printf 'Translate\nProofread\nCorrect\n' | walker -d -p 'Writing Tools:' -X -e 2>/dev/null || true)"
+[[ -z "$ACTION" ]] && exit 0
+
+ORIG_FILE="$(mktemp -t tot-orig.XXXXXX)"
+RESULT_FILE="$(mktemp -t tot-result.XXXXXX)"
+trap 'rm -f "$ORIG_FILE" "$RESULT_FILE"' EXIT
+
+printf '%s' "$TEXT" > "$ORIG_FILE"
+
+export GEMINI_API_KEY MODEL TARGET_LANG
+export LMSTUDIO_URL LMSTUDIO_MODEL
+export OLLAMA_HOST OLLAMA_URL OLLAMA_MODEL OLLAMA_KEEP_ALIVE OLLAMA_NUM_CTX OLLAMA_NO_THINK
+ERR_FILE="$(mktemp -t tot-err.XXXXXX)"
+trap 'rm -f "$ORIG_FILE" "$RESULT_FILE" "$ERR_FILE"' EXIT
+
+run_provider() {
+  local script="$1"
+  : > "$RESULT_FILE"
+  : > "$ERR_FILE"
+  "$PROJ_DIR/$script" "$ACTION" "$ORIG_FILE" > "$RESULT_FILE" 2> "$ERR_FILE"
+}
+
+if ! run_provider "$PROVIDER_SCRIPT"; then
+  ERR="$(cat "$ERR_FILE" 2>/dev/null || true)"
+  if [[ "$IS_LOCAL" == "1" && "$FALLBACK_ENABLED" == "true" && -n "${GEMINI_API_KEY:-}" ]]; then
+    notify-send "TranslateOnTheGo" "Local model unavailable ($PROVIDER) — falling back to Gemini."
+    if ! run_provider "lib/gemini.sh"; then
+      ERR2="$(cat "$ERR_FILE" 2>/dev/null || true)"
+      notify-send -u critical "TranslateOnTheGo" "Both providers failed. $PROVIDER: ${ERR:-unknown}. Gemini: ${ERR2:-unknown}"
+      exit 1
+    fi
+  else
+    notify-send -u critical "TranslateOnTheGo" "$PROVIDER error: ${ERR:-unknown}"
+    exit 1
+  fi
+fi
+
+if [[ ! -s "$RESULT_FILE" ]]; then
+  notify-send "TranslateOnTheGo" "Empty response from provider."
+  exit 1
+fi
+
+rm -f "$ERR_FILE"
+trap - EXIT
+exec python3 "$PROJ_DIR/bin/tot-review.py" \
+  --action "$ACTION" \
+  --original-file "$ORIG_FILE" \
+  --result-file "$RESULT_FILE"

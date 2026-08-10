@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Editor / OS
+.DS_Store
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Local Claude config
+.claude/
+
+# Local config with secrets — never commit
+config
+!config.example
+
+# Logs / temp
+*.log
+*.bak

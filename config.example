@@ -1,0 +1,58 @@
+# TranslateOnTheGo config — sourced as bash.
+# Copy to ~/.config/translateonthego/config and edit.
+
+# ---- Provider selection ----
+# "gemini"   — Google Gemini API (needs GEMINI_API_KEY). Daily driver.
+# "ollama"   — Local Ollama server (no key, no network, private).
+#              You start it by hand: `tot-llm start`. Never runs at boot.
+# "lmstudio" — Local LM Studio server (legacy; prefer "ollama").
+PROVIDER="gemini"
+
+# ---- Gemini settings ----
+# Preferred: export GEMINI_API_KEY in your shell env.
+# Or store it here (chmod 600 this file).
+# GEMINI_API_KEY="your-key-here"
+# Measured on short paragraphs: flash-lite ~1.0s, 3.6-flash ~2.8s, and the
+# non-lite 3.5-flash ~13s (it reasons before answering — too slow for a keybind).
+# Quality was indistinguishable between flash-lite and 3.6-flash on translate,
+# proofread, and correct. List what your key can use with:
+#   curl -s https://generativelanguage.googleapis.com/v1beta/models \
+#     -H "x-goog-api-key: $GEMINI_API_KEY" | jq -r '.models[].name'
+MODEL="gemini-3.5-flash-lite"
+
+# ---- Ollama settings ----
+# Endpoint. Loopback only — this server has no auth, never bind it publicly.
+OLLAMA_HOST="127.0.0.1:11434"
+
+# Model tag. Pull it with: tot-llm pull
+#   gemma4:e4b-it-qat   6.1GB  Gemma 4 E4B, quantization-aware trained.
+#                              Fits fully in 8GB VRAM. 140+ languages.
+#   qwen3.5:4b          3.4GB  Lighter and faster, strong multilingual.
+#   gemma4:12b-it-qat   7.2GB  Better quality, tight fit in 8GB.
+# Note: the plain `gemma4:e4b` tag is 9.6GB and will NOT fit in 8GB VRAM —
+# it spills onto the CPU and gets slow. Use the -it-qat variant.
+OLLAMA_MODEL="gemma4:e4b-it-qat"
+
+# How long the model stays resident in VRAM after a request. `tot-llm stop`
+# frees everything regardless; this only bounds idle VRAM while it's running.
+OLLAMA_KEEP_ALIVE="5m"
+
+# Context window. Bigger costs VRAM; 8k is plenty for selected text.
+OLLAMA_NUM_CTX="8192"
+
+# Set "true" only for reasoning models (qwen3.x, exaone-deep) to skip the
+# think pass. Models without thinking support reject this field outright.
+OLLAMA_NO_THINK="false"
+
+# ---- LM Studio settings ----
+LMSTUDIO_URL="http://localhost:1234/v1/chat/completions"
+LMSTUDIO_MODEL="local-model"
+
+# ---- Shared ----
+# Default translation target language.
+# If source text is already in this language, it translates to English instead.
+TARGET_LANG="Korean"
+
+# When a local provider is selected but its server isn't running, fall back to
+# Gemini automatically (requires GEMINI_API_KEY). Set "false" to fail loud.
+FALLBACK_ENABLED="true"

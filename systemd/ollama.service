@@ -1,0 +1,35 @@
+[Unit]
+Description=Ollama (user-scoped, on-demand — TranslateOnTheGo)
+Documentation=https://github.com/ollama/ollama
+After=graphical-session.target
+
+[Service]
+Type=exec
+ExecStart=/usr/bin/ollama serve
+Restart=on-failure
+RestartSec=3
+
+# Bind to loopback only. This server has no authentication; do not expose it.
+Environment=OLLAMA_HOST=127.0.0.1:11434
+
+# Model storage. Owned by you — no sudo needed to add or delete models.
+Environment=OLLAMA_MODELS=%h/.local/share/ollama/models
+
+# Drop the model out of VRAM after this much idle time. Stopping the service
+# frees everything; this just keeps VRAM from being held while it sits running.
+Environment=OLLAMA_KEEP_ALIVE=5m
+
+# One model resident at a time, one request at a time — keeps GPU and CPU
+# pressure predictable while you are working.
+Environment=OLLAMA_MAX_LOADED_MODELS=1
+Environment=OLLAMA_NUM_PARALLEL=1
+
+Environment=OLLAMA_FLASH_ATTENTION=1
+
+# Optional overrides. Listed last so anything set here wins over the defaults
+# above — systemd applies Environment/EnvironmentFile in file order. Create the
+# file to change OLLAMA_MODELS etc. without editing this unit.
+EnvironmentFile=-%h/.config/translateonthego/ollama.env
+
+# Deliberately NOT installed to any target: this unit must never autostart.
+# Start it with `tot-llm start` (or `systemctl --user start ollama`).
