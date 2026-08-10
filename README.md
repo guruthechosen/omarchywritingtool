@@ -8,6 +8,8 @@ Apple-style Writing Tools for Hyprland / Omarchy / Arch. Select text anywhere, h
 
 No right-click menus on Wayland — so a Hyprland keybind is the closest idiom. Pick text → `Super + H` → action → review → paste.
 
+> The repo is `omarchywritingtool`; the tool it installs is called `translateonthego`. Same thing.
+
 ---
 
 ## Features
@@ -45,8 +47,8 @@ Not yet — contributions welcome. A walker-picker shot and a review-window shot
 ## Installation
 
 ```bash
-git clone https://github.com/guruthechosen/translateonthego.git
-cd translateonthego
+git clone https://github.com/guruthechosen/omarchywritingtool.git
+cd omarchywritingtool
 bash install.sh
 ```
 
@@ -162,7 +164,7 @@ Sizes are quantized download sizes from <https://ollama.com/library> and drift o
 ## Project layout
 
 ```
-translateonthego/
+omarchywritingtool/
 ├── bin/
 │   ├── translateonthego    # main entry (bash)
 │   ├── tot-llm             # start/stop/pull for the local Ollama server

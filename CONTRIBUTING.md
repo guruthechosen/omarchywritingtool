@@ -11,8 +11,8 @@ Thanks for taking an interest. This is a small tool with a deliberately small sc
 ## Development setup
 
 ```bash
-git clone https://github.com/<you>/translateonthego.git
-cd translateonthego
+git clone https://github.com/<you>/omarchywritingtool.git
+cd omarchywritingtool
 bash install.sh
 ```
 

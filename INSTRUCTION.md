@@ -47,8 +47,8 @@ Optional (the installer will install these for you if missing):
 Pick a location and clone:
 
 ```bash
-git clone https://github.com/guruthechosen/translateonthego.git
-cd translateonthego
+git clone https://github.com/guruthechosen/omarchywritingtool.git
+cd omarchywritingtool
 ```
 
 Or if you've already downloaded the source, `cd` into the directory.
