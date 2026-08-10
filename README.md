@@ -28,7 +28,7 @@ No right-click menus on Wayland — so a Hyprland keybind is the closest idiom. 
 
 ## Screenshots
 
-*(Add screenshots to `docs/` and reference them here.)*
+Not yet — contributions welcome. A walker-picker shot and a review-window shot would cover it.
 
 ---
 
@@ -91,6 +91,16 @@ Typical workflow: Gemini as daily driver, switch to a local model when hitting q
 
 **Auto-fallback:** If a local provider is selected but its server isn't running, the tool falls back to Gemini automatically (if `GEMINI_API_KEY` is set). A toast tells you it fell back. Disable with `FALLBACK_ENABLED="false"` in config if you want hard failure instead.
 
+### Changing the keybind
+
+Edit `~/.config/hypr/translateonthego.conf` (symlinked from the repo):
+
+```
+bindd = SUPER, H, TranslateOnTheGo, exec, uwsm-app -- translateonthego
+```
+
+Change `SUPER, H` to taste, then `hyprctl reload`.
+
 ---
 
 ## Local models (`tot-llm`)
@@ -110,26 +120,31 @@ Models live in **`~/.local/share/ollama/models`** — owned by you, no `sudo` re
 
 ### Choosing a model
 
-Watch the VRAM ceiling — a model that doesn't fit spills onto the CPU and gets slow, which defeats the point.
+The rule that matters: **the model must fit your VRAM.** Anything that doesn't gets partially offloaded to the CPU, which is slow and loud and defeats the point of running locally. Check your ceiling first:
 
-| Tag | Size | Notes |
-|-----|------|-------|
-| `gemma4:e4b-it-qat` | 6.1 GB | Gemma 4 E4B, quantization-aware trained. Default. Fits 8 GB VRAM, 140+ languages. |
-| `qwen3.5:4b` | 3.4 GB | Lighter and faster; strong multilingual. Set `OLLAMA_NO_THINK="true"`. |
-| `gemma4:12b-it-qat` | 7.2 GB | Better quality, tight fit in 8 GB. |
-| `gemma4:e4b` | 9.6 GB | The plain tag — **won't** fit in 8 GB. Prefer the `-it-qat` variant. |
-
-Swap with one line in the config, then `tot-llm pull`.
-
-### Changing the keybind
-
-Edit `~/.config/hypr/translateonthego.conf` (symlinked from the repo):
-
-```
-bindd = SUPER, H, TranslateOnTheGo, exec, uwsm-app -- translateonthego
+```bash
+nvidia-smi --query-gpu=memory.total --format=csv   # NVIDIA
+rocm-smi --showmeminfo vram                        # AMD
+# Intel / Apple / integrated: you're sharing system RAM — budget accordingly
 ```
 
-Change `SUPER, H` to taste, then `hyprctl reload`.
+Then leave ~1–2 GB of headroom on top of the model size for the KV cache.
+
+| Your VRAM | Suggested tag | Size |
+|-----------|---------------|------|
+| 4–6 GB | `gemma4:e2b-it-qat` or `qwen3.5:2b` | 4.3 / 1.9 GB |
+| 8 GB | `gemma4:e4b-it-qat` *(default)* or `qwen3.5:4b` | 6.1 / 3.4 GB |
+| 12 GB | `gemma4:12b-it-qat` | 7.2 GB |
+| 16 GB+ | `gemma4:26b-a4b-it-qat`, `qwen3.5:9b` | 16 / 6.6 GB |
+| CPU only | `qwen3.5:2b` — expect several seconds per request | 1.9 GB |
+
+Notes:
+
+- **Prefer `-it-qat` tags.** Quantization-aware training keeps near-full quality at roughly Q4 size. The plain tags are much larger for little gain — `gemma4:e4b` is 9.6 GB versus 6.1 GB for `gemma4:e4b-it-qat`.
+- **Reasoning models** (`qwen3.x`, `exaone-deep`) think before answering, which adds seconds. Set `OLLAMA_NO_THINK="true"` for those. Models without a reasoning mode reject that field, so leave it `"false"` otherwise.
+- **Language-specialised options** exist — e.g. `exaone3.5:7.8b` (4.8 GB) is purpose-built bilingual Korean/English, stronger on that pair but weaker elsewhere.
+
+Sizes are quantized download sizes from <https://ollama.com/library> and drift over time. Swap with one line in the config, then `tot-llm pull`.
 
 ---
 
@@ -166,6 +181,8 @@ translateonthego/
 ├── uninstall.sh            # reverts install.sh
 ├── INSTRUCTION.md          # step-by-step setup
 ├── UNINSTALL.md            # full revert guide
+├── CONTRIBUTING.md         # style + provider contract
+├── SECURITY.md             # data flow, key handling, disclosure
 ├── LICENSE                 # MIT
 └── README.md               # this file
 ```
@@ -214,14 +231,13 @@ See [UNINSTALL.md](UNINSTALL.md) for a complete revert guide.
 
 ## Contributing
 
-PRs welcome. Small things:
+PRs welcome — see **[CONTRIBUTING.md](CONTRIBUTING.md)** for style, the provider contract, and what to test before submitting.
 
-- Follow existing style: bash with `set -euo pipefail`, Python 3 with stdlib + GTK4.
-- Keep the review window minimal — this tool is supposed to stay out of your way.
-- Test on a fresh clone before submitting.
-- Adding a new provider? Put it in `lib/<provider>.sh` with the same contract: `action text_file` → stdout text, stderr errors.
+The short version: keep it minimal, never phone home, and never start a local server on the user's behalf.
 
-Bug reports: include `hyprctl version`, the command line that failed, and what you expected.
+## Security
+
+Your text goes to whichever provider you configure — Gemini means it leaves your machine; Ollama and LM Studio stay on localhost. Your API key lives in a `600` config file outside the repo. See **[SECURITY.md](SECURITY.md)** for the details and for reporting vulnerabilities.
 
 ---
 

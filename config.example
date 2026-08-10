@@ -25,12 +25,16 @@ MODEL="gemini-3.5-flash-lite"
 OLLAMA_HOST="127.0.0.1:11434"
 
 # Model tag. Pull it with: tot-llm pull
-#   gemma4:e4b-it-qat   6.1GB  Gemma 4 E4B, quantization-aware trained.
-#                              Fits fully in 8GB VRAM. 140+ languages.
-#   qwen3.5:4b          3.4GB  Lighter and faster, strong multilingual.
-#   gemma4:12b-it-qat   7.2GB  Better quality, tight fit in 8GB.
-# Note: the plain `gemma4:e4b` tag is 9.6GB and will NOT fit in 8GB VRAM —
-# it spills onto the CPU and gets slow. Use the -it-qat variant.
+# Pick one that FITS YOUR VRAM, leaving ~1-2GB headroom for the KV cache —
+# a model that doesn't fit spills onto the CPU and gets slow.
+#   4-6GB VRAM   gemma4:e2b-it-qat   4.3GB   or  qwen3.5:2b   1.9GB
+#   8GB VRAM     gemma4:e4b-it-qat   6.1GB   or  qwen3.5:4b   3.4GB
+#   12GB VRAM    gemma4:12b-it-qat   7.2GB
+#   16GB+ VRAM   gemma4:26b-a4b-it-qat 16GB  or  qwen3.5:9b   6.6GB
+#   CPU only     qwen3.5:2b          1.9GB   (several seconds per request)
+# Prefer the -it-qat tags: quantization-aware training gives near-full quality
+# at Q4 size. The plain `gemma4:e4b` is 9.6GB for the same model.
+# Full catalogue: https://ollama.com/library
 OLLAMA_MODEL="gemma4:e4b-it-qat"
 
 # How long the model stays resident in VRAM after a request. `tot-llm stop`

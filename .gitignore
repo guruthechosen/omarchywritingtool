@@ -11,13 +11,25 @@ __pycache__/
 .vscode/
 .idea/
 
-# Local Claude config
+# Local agent / editor config
 .claude/
+.cursor/
+.aider*
 
 # Local config with secrets — never commit
 config
 !config.example
+*.env
+.env*
+ollama.env
+secrets*
+*.key
+*.pem
 
-# Logs / temp
+# Logs / temp / scratch
 *.log
 *.bak
+*.orig
+*.rej
+tmp/
+scratch/

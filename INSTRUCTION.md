@@ -65,11 +65,14 @@ This does the following, idempotently:
 
 1. Installs any missing dependencies via `pacman -S --needed` (prompts for sudo).
 2. Marks the scripts executable.
-3. Creates `~/.config/translateonthego/` and copies `config.example` there as `config` (only if no config exists yet).
-4. Symlinks `~/.local/bin/translateonthego` → this repo's `bin/translateonthego`, so you can run the command from anywhere.
-5. Symlinks `~/.config/hypr/translateonthego.conf` → this repo's Hyprland config (keybind + window rules).
-6. Appends `source = ~/.config/hypr/translateonthego.conf` to `~/.config/hypr/hyprland.conf` (skipped if already present).
-7. Runs `hyprctl reload` so Hyprland picks up the new config.
+3. Creates `~/.config/translateonthego/` and copies `config.example` there as `config` (only if no config exists yet, so re-running never clobbers your key).
+4. Symlinks `~/.local/bin/translateonthego` and `~/.local/bin/tot-llm` → this repo, so you can run both commands from anywhere. Warns if `~/.local/bin` isn't on your `PATH`.
+5. Symlinks `~/.config/systemd/user/ollama.service` → this repo's user unit for local models. **Installed but never enabled** — it has no `[Install]` section, so it cannot autostart at boot or login. Warns if the distro's *system* `ollama.service` is enabled.
+6. Symlinks `~/.config/hypr/translateonthego.conf` → this repo's Hyprland config (keybind + window rules).
+7. Appends `source = ~/.config/hypr/translateonthego.conf` to `~/.config/hypr/hyprland.conf` (skipped if already present).
+8. Runs `hyprctl reload` so Hyprland picks up the new config.
+
+It installs nothing outside your home directory except the packages in step 1, and everything it does is reversible with `bash uninstall.sh` — see [UNINSTALL.md](UNINSTALL.md).
 
 When it finishes, you'll see a summary of next steps printed to the terminal.
 
@@ -77,7 +80,7 @@ When it finishes, you'll see a summary of next steps printed to the terminal.
 
 ## 4. Pick a provider and configure it
 
-You have two providers to choose from. Pick the one that fits you. You can switch anytime by editing one line in the config.
+Pick the one that fits you — you can switch anytime by editing one line in the config. **Option A (Gemini)** is the recommended starting point: it needs no downloads and no GPU. Options B and C run models locally instead, trading setup and hardware for privacy and zero API cost.
 
 ### Option A — Gemini (cloud)
 
@@ -181,20 +184,27 @@ That fetches whatever `OLLAMA_MODEL` is set to (default `gemma4:e4b-it-qat`) int
 The main thing to get right is **fitting your VRAM**. A model that doesn't fit gets partially offloaded to the CPU, which is slow and defeats the purpose. Check your ceiling first:
 
 ```bash
-nvidia-smi --query-gpu=memory.total --format=csv
+nvidia-smi --query-gpu=memory.total --format=csv   # NVIDIA
+rocm-smi --showmeminfo vram                        # AMD
 ```
 
-| Tag | Size | Notes |
-|-----|------|-------|
-| `gemma4:e4b-it-qat` | 6.1 GB | Gemma 4 E4B, quantization-aware trained — near-full quality at Q4 size. 140+ languages. Good default for an 8 GB card. |
-| `qwen3.5:4b` | 3.4 GB | Lighter and faster, strong multilingual. Set `OLLAMA_NO_THINK="true"` for it. |
-| `gemma4:12b-it-qat` | 7.2 GB | Better quality; tight in 8 GB alongside the KV cache. |
-| `gemma4:e2b-it-qat` | 4.3 GB | Smallest Gemma 4. For 4–6 GB cards. |
-| `exaone3.5:7.8b` | 4.8 GB | LG AI Research, purpose-built bilingual Korean/English. Older, weaker outside that pair. |
+Leave ~1–2 GB of headroom above the model size for the KV cache, then pick:
 
-Avoid the plain `gemma4:e4b` tag — it's 9.6 GB and won't fit in 8 GB.
+| Your VRAM | Suggested tag | Size |
+|-----------|---------------|------|
+| 4–6 GB | `gemma4:e2b-it-qat` or `qwen3.5:2b` | 4.3 / 1.9 GB |
+| 8 GB | `gemma4:e4b-it-qat` *(the default)* or `qwen3.5:4b` | 6.1 / 3.4 GB |
+| 12 GB | `gemma4:12b-it-qat` | 7.2 GB |
+| 16 GB+ | `gemma4:26b-a4b-it-qat` or `qwen3.5:9b` | 16 / 6.6 GB |
+| CPU only | `qwen3.5:2b`, and expect several seconds per request | 1.9 GB |
 
-Browse more at <https://ollama.com/library>.
+Three things worth knowing when you deviate from this table:
+
+1. **Prefer `-it-qat` tags.** Quantization-aware training gives near-full quality at roughly Q4 size. The plain tags cost far more memory for little gain — `gemma4:e4b` is 9.6 GB versus 6.1 GB for `gemma4:e4b-it-qat`.
+2. **Reasoning models add latency.** `qwen3.x` and `exaone-deep` think before answering. Set `OLLAMA_NO_THINK="true"` for them. Models without a reasoning mode reject that field outright, so leave it `"false"` otherwise.
+3. **Language-specialised models can beat bigger generalists** on their pair — `exaone3.5:7.8b` (4.8 GB) is purpose-built bilingual Korean/English, for instance.
+
+Sizes are quantized download sizes and drift over time. Browse the current catalogue at <https://ollama.com/library>.
 
 #### B.3 Switch the provider
 

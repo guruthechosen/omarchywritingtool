@@ -78,14 +78,31 @@ ln -sfn "$PROJ_DIR/bin/tot-llm" "$LLM_LINK"
 say "Installing on-demand Ollama user unit at $UNIT_DST"
 mkdir -p "$(dirname "$UNIT_DST")"
 ln -sfn "$UNIT_SRC" "$UNIT_DST"
-mkdir -p "${XDG_DATA_HOME:-$HOME/.local/share}/ollama/models"
 systemctl --user daemon-reload 2>/dev/null || warn "systemctl --user daemon-reload failed"
+
+# The unit has no [Install] section on purpose, so `systemctl enable` cannot
+# succeed and no preset sweep can ever turn it on. It starts only via tot-llm.
 if systemctl is-enabled ollama.service >/dev/null 2>&1; then
   warn "The SYSTEM ollama.service is enabled and will autostart at boot."
-  warn "To keep this manual-only: sudo systemctl disable --now ollama.service"
+  warn "To keep local models manual-only: sudo systemctl disable --now ollama.service"
 fi
-command -v ollama >/dev/null 2>&1 \
-  || say "Ollama not installed yet. For local models: sudo pacman -S --needed ollama ollama-cuda"
+
+if command -v ollama >/dev/null 2>&1; then
+  # Only create the model store for people who actually have Ollama.
+  mkdir -p "${XDG_DATA_HOME:-$HOME/.local/share}/ollama/models"
+else
+  say "Ollama not installed. Optional — only needed for local models:"
+  say "  sudo pacman -S --needed ollama ollama-cuda   # or ollama-vulkan / ollama-rocm"
+fi
+
+# 4c. PATH sanity — the symlinks are useless if this directory isn't on PATH.
+case ":$PATH:" in
+  *":$HOME/.local/bin:"*) ;;
+  *) warn "$HOME/.local/bin is not on your PATH — 'translateonthego' and 'tot-llm'"
+     warn "won't be runnable by name. Add to your shell rc:"
+     warn "  export PATH=\"\$HOME/.local/bin:\$PATH\""
+     ;;
+esac
 
 # 5. Hyprland conf symlink + source line
 say "Installing Hyprland conf"
