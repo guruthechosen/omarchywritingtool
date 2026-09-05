@@ -15,7 +15,7 @@ No right-click menus on Wayland — so a Hyprland keybind is the closest idiom. 
 ## Features
 
 - **Global trigger** via Hyprland keybind (`Super + H` by default) over your PRIMARY selection. Falls back to the clipboard when no selection is available — and tells you when it did, so a stale clipboard never masquerades as your selection. (See [LibreOffice](#libreoffice-and-other-apps-that-dont-publish-selections).)
-- **Three actions** via [walker](https://github.com/abenz1267/walker) dmenu:
+- **Three actions** via whichever dmenu-style picker you already have (walker, Omarchy's menu, fuzzel, wofi, rofi):
   - **Translate** — translate to your target language (Korean by default). If already in that language, translates to English.
   - **Proofread** — improve grammar, clarity, flow, naturalness. Keeps original language and tone.
   - **Correct** — fix only grammar / spelling / punctuation. No rephrasing.
@@ -30,14 +30,15 @@ No right-click menus on Wayland — so a Hyprland keybind is the closest idiom. 
 
 ## Screenshots
 
-Not yet — contributions welcome. A walker-picker shot and a review-window shot would cover it.
+Not yet — contributions welcome. An action-menu shot and a review-window shot would cover it.
 
 ---
 
 ## Requirements
 
 - **Omarchy / Arch Linux** with **Hyprland** (Wayland compositor)
-- `wl-clipboard`, `walker`, `curl`, `jq`, `libnotify`, `python`, `python-gobject`, `gtk4` — the installer will install any that are missing via `pacman`.
+- `wl-clipboard`, `curl`, `jq`, `libnotify`, `python`, `python-gobject`, `gtk4` — the installer will install any that are missing via `pacman`.
+- **A dmenu-style picker** — any one of `walker`, `omarchy-menu-select` (ships with Omarchy 4+), `fuzzel`, `wofi`, or `rofi`. The installer uses whichever it finds and only installs `fuzzel` if you have none.
 - **For Gemini**: a Google Gemini API key — free tier at <https://aistudio.google.com/apikey>
 - **For Ollama**: `sudo pacman -S --needed ollama ollama-cuda` (or `ollama-vulkan` / `ollama-rocm` / plain `ollama` for CPU), plus enough VRAM for your chosen model
 - **For LM Studio**: [LM Studio](https://lmstudio.ai/) with a chat model loaded and its local server running (default port `1234`)
@@ -95,13 +96,25 @@ Typical workflow: Gemini as daily driver, switch to a local model when hitting q
 
 ### Changing the keybind
 
-Edit `~/.config/hypr/translateonthego.conf` (symlinked from the repo):
+Hyprland has two config providers, and `install.sh` picks the right one for you. Check which you're on:
+
+```bash
+hyprctl systeminfo | grep configProvider
+```
+
+**Lua** (Omarchy 4+) — edit `~/.config/hypr/translateonthego.lua`:
+
+```lua
+o.bind("SUPER + H", "TranslateOnTheGo", o.launch("translateonthego"))
+```
+
+**Classic `.conf`** — edit `~/.config/hypr/translateonthego.conf`:
 
 ```
 bindd = SUPER, H, TranslateOnTheGo, exec, uwsm-app -- translateonthego
 ```
 
-Change `SUPER, H` to taste, then `hyprctl reload`.
+Change the key to taste, then `hyprctl reload`.
 
 ---
 
@@ -198,8 +211,10 @@ omarchywritingtool/
 | `~/.config/systemd/user/ollama.service` | Symlink → `systemd/ollama.service` (installed, not enabled) |
 | `~/.local/share/ollama/models` | Downloaded local models |
 | `~/.config/translateonthego/config` | User config |
-| `~/.config/hypr/translateonthego.conf` | Symlink → `hypr/translateonthego.conf` |
-| `~/.config/hypr/hyprland.conf` | Appended: `source = ~/.config/hypr/translateonthego.conf` |
+| `~/.config/hypr/translateonthego.lua` | Symlink → `hypr/translateonthego.lua` *(lua provider)* |
+| `~/.config/hypr/hyprland.lua` | Appended: `require("hypr.translateonthego")` *(lua provider)* |
+| `~/.config/hypr/translateonthego.conf` | Symlink → `hypr/translateonthego.conf` *(classic provider)* |
+| `~/.config/hypr/hyprland.conf` | Appended: `source = ...` *(classic provider)* |
 
 See [UNINSTALL.md](UNINSTALL.md) for a complete revert guide.
 
@@ -239,7 +254,8 @@ There is no text to retrieve, so no amount of MIME-type negotiation helps. The t
 The review window shows a warning banner and labels the source **"Original (from clipboard)"** whenever this happens, so you can tell a wrong *input* from a bad *translation*. Earlier versions silently translated your stale clipboard and looked confident about it.
 
 If you hit this with another app, the same `Ctrl+C` workaround applies.
-- **Walker doesn't appear** — Confirm `walker` is installed and runnable: `walker -v`.
+- **No action menu appears** — you have none of the supported pickers installed. Install any one of `walker`, `fuzzel`, `wofi`, or `rofi` (Omarchy 4+ already provides `omarchy-menu-select`).
+- **Nothing happens on `Super + H` after a distro upgrade** — the upgrade probably switched Hyprland's config provider. Check with `hyprctl systeminfo | grep configProvider`, then re-run `bash install.sh`; it detects `lua` vs `conf` and installs the right file.
 - **API error toast** — Check your key, quota, and network. The Gemini error message is shown in the notification.
 
 ---
@@ -247,7 +263,7 @@ If you hit this with another app, the same `Ctrl+C` workaround applies.
 ## Roadmap
 
 - OpenAI provider (`lib/openai.sh`)
-- Provider switcher in the walker menu (no config edit)
+- Provider switcher in the action menu (no config edit)
 - Additional actions: Summarize, Make Shorter / Longer, Change Tone
 - Optional auto-paste via `ydotool` (uinput-level, more reliable than `wtype`)
 - Custom prompts via config

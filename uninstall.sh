@@ -7,6 +7,9 @@ LLM_LINK="$HOME/.local/bin/tot-llm"
 UNIT_DST="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user/ollama.service"
 MODELS_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/ollama/models"
 HYPR_DST="$HOME/.config/hypr/translateonthego.conf"
+HYPR_DST_LUA="$HOME/.config/hypr/translateonthego.lua"
+HYPR_MAIN_LUA="$HOME/.config/hypr/hyprland.lua"
+REQUIRE_LINE='require("hypr.translateonthego")'
 HYPR_MAIN="$HOME/.config/hypr/hyprland.conf"
 SOURCE_LINE="source = ~/.config/hypr/translateonthego.conf"
 
@@ -25,8 +28,18 @@ if [[ -L "$UNIT_DST" || -f "$UNIT_DST" ]]; then
   systemctl --user daemon-reload 2>/dev/null || true
 fi
 
-say "Removing $HYPR_DST"
-rm -f "$HYPR_DST"
+say "Removing $HYPR_DST and $HYPR_DST_LUA"
+rm -f "$HYPR_DST" "$HYPR_DST_LUA"
+
+# Lua provider (Omarchy 4+): strip the require line from hyprland.lua.
+if [[ -f "$HYPR_MAIN_LUA" ]] && grep -qxF "$REQUIRE_LINE" "$HYPR_MAIN_LUA"; then
+  say "Stripping require line from $HYPR_MAIN_LUA (backup at ${HYPR_MAIN_LUA}.bak)"
+  cp "$HYPR_MAIN_LUA" "${HYPR_MAIN_LUA}.bak"
+  awk -v line="$REQUIRE_LINE" '
+    /^-- TranslateOnTheGo$/ { next }
+    { if ($0 == line) next; print }
+  ' "${HYPR_MAIN_LUA}.bak" > "$HYPR_MAIN_LUA"
+fi
 
 if [[ -f "$HYPR_MAIN" ]] && grep -qxF "$SOURCE_LINE" "$HYPR_MAIN"; then
   say "Stripping source line from $HYPR_MAIN (backup at ${HYPR_MAIN}.bak)"

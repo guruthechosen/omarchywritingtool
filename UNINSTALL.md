@@ -55,11 +55,27 @@ rm -rf ~/.local/share/ollama/models
 
 ### Step 2: Remove the Hyprland config symlink
 
+Only one of these exists, depending on your config provider — removing both is safe:
+
 ```bash
-rm -f ~/.config/hypr/translateonthego.conf
+rm -f ~/.config/hypr/translateonthego.conf ~/.config/hypr/translateonthego.lua
 ```
 
-### Step 3: Remove the `source =` line from `hyprland.conf`
+### Step 3a: Remove the `require` line from `hyprland.lua` (Omarchy 4+)
+
+If `hyprctl systeminfo | grep configProvider` says `lua`, `install.sh` appended:
+
+```lua
+-- TranslateOnTheGo
+require("hypr.translateonthego")
+```
+
+```bash
+cp ~/.config/hypr/hyprland.lua ~/.config/hypr/hyprland.lua.bak
+sed -i '/^-- TranslateOnTheGo$/d; /^require("hypr\.translateonthego")$/d' ~/.config/hypr/hyprland.lua
+```
+
+### Step 3b: Remove the `source =` line from `hyprland.conf`
 
 `install.sh` appended two lines at the end of `~/.config/hypr/hyprland.conf`:
 
@@ -120,7 +136,7 @@ At this point the `Super + H` binding is gone and the tool no longer runs.
 
 ### Step 7 (optional): Remove installed packages
 
-`install.sh` may have installed `wl-clipboard`, `walker`, `curl`, `jq`, `libnotify`, `python`, `python-gobject`, `gtk4` via `pacman -S --needed`.
+`install.sh` may have installed `wl-clipboard`, `curl`, `jq`, `libnotify`, `python`, `python-gobject`, `gtk4`, and possibly `fuzzel` via `pacman -S --needed`.
 
 These are **likely used by other apps / Omarchy itself** — don't remove unless you're sure they're unused. TranslateOnTheGo doesn't install anything exclusive to itself.
 

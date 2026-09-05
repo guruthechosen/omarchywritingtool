@@ -76,7 +76,35 @@ if [[ -z "$TEXT" ]]; then
   exit 0
 fi
 
-ACTION="$(printf 'Translate\nProofread\nCorrect\n' | walker -d -p 'Writing Tools:' -X -e 2>/dev/null || true)"
+# Pick whichever dmenu-style picker this desktop actually ships. Omarchy 4
+# dropped walker for its own shell menu, so hard-coding one launcher breaks the
+# tool on a distro upgrade. Each branch must print the chosen line on stdout.
+pick_action() {
+  local opts
+  opts="$(printf 'Translate\nProofread\nCorrect\n')"
+
+  if command -v walker >/dev/null 2>&1; then
+    printf '%s\n' "$opts" | walker -d -p 'Writing Tools:' -X -e 2>/dev/null
+  elif command -v omarchy-menu-select >/dev/null 2>&1; then
+    printf '%s\n' "$opts" | omarchy-menu-select 'Writing Tools' 2>/dev/null
+  elif command -v fuzzel >/dev/null 2>&1; then
+    printf '%s\n' "$opts" | fuzzel --dmenu --prompt 'Writing Tools: ' 2>/dev/null
+  elif command -v wofi >/dev/null 2>&1; then
+    printf '%s\n' "$opts" | wofi --dmenu --prompt 'Writing Tools' 2>/dev/null
+  elif command -v rofi >/dev/null 2>&1; then
+    printf '%s\n' "$opts" | rofi -dmenu -p 'Writing Tools' 2>/dev/null
+  else
+    notify-send -u critical "TranslateOnTheGo" \
+      "No menu program found. Install one of: walker, fuzzel, wofi, rofi."
+    return 1
+  fi
+}
+
+ACTION="$(pick_action || true)"
+# Trim whitespace — some pickers return the line with a trailing newline or
+# padding, and the provider scripts match the action name exactly.
+ACTION="${ACTION#"${ACTION%%[![:space:]]*}"}"
+ACTION="${ACTION%"${ACTION##*[![:space:]]}"}"
 [[ -z "$ACTION" ]] && exit 0
 
 ORIG_FILE="$(mktemp -t tot-orig.XXXXXX)"

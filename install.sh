@@ -7,10 +7,24 @@ BIN_LINK="$HOME/.local/bin/translateonthego"
 LLM_LINK="$HOME/.local/bin/tot-llm"
 UNIT_SRC="$PROJ_DIR/systemd/ollama.service"
 UNIT_DST="${XDG_CONFIG_HOME:-$HOME/.config}/systemd/user/ollama.service"
-HYPR_SRC="$PROJ_DIR/hypr/translateonthego.conf"
-HYPR_DST="$HOME/.config/hypr/translateonthego.conf"
-HYPR_MAIN="$HOME/.config/hypr/hyprland.conf"
-SOURCE_LINE="source = ~/.config/hypr/translateonthego.conf"
+# Hyprland has two config providers. Omarchy 4+ (and any Hyprland reporting
+# `configProvider: lua`) uses hyprland.lua and `require`; older setups use
+# hyprland.conf and `source =`. Detect rather than assume, or a distro upgrade
+# silently orphans the keybind.
+if [[ -f "$HOME/.config/hypr/hyprland.lua" ]] \
+   || hyprctl systeminfo 2>/dev/null | grep -qi 'configProvider:[[:space:]]*lua'; then
+  HYPR_PROVIDER="lua"
+  HYPR_SRC="$PROJ_DIR/hypr/translateonthego.lua"
+  HYPR_DST="$HOME/.config/hypr/translateonthego.lua"
+  HYPR_MAIN="$HOME/.config/hypr/hyprland.lua"
+  SOURCE_LINE='require("hypr.translateonthego")'
+else
+  HYPR_PROVIDER="conf"
+  HYPR_SRC="$PROJ_DIR/hypr/translateonthego.conf"
+  HYPR_DST="$HOME/.config/hypr/translateonthego.conf"
+  HYPR_MAIN="$HOME/.config/hypr/hyprland.conf"
+  SOURCE_LINE="source = ~/.config/hypr/translateonthego.conf"
+fi
 
 say() { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
 warn() { printf '\033[1;33m[warn]\033[0m %s\n' "$*" >&2; }
@@ -19,9 +33,21 @@ die() { printf '\033[1;31m[err]\033[0m %s\n' "$*" >&2; exit 1; }
 # 1. Deps
 say "Checking dependencies…"
 missing=()
-for cmd in curl jq wl-paste wl-copy walker hyprctl notify-send python3; do
+for cmd in curl jq wl-paste wl-copy hyprctl notify-send python3; do
   command -v "$cmd" >/dev/null 2>&1 || missing+=("$cmd")
 done
+
+# The action menu works with any dmenu-style picker, so require *one of* them
+# rather than a specific launcher. Omarchy 4 dropped walker for its own shell
+# menu; pinning walker here would force an unwanted package onto that setup.
+PICKER=""
+for p in walker omarchy-menu-select fuzzel wofi rofi; do
+  if command -v "$p" >/dev/null 2>&1; then PICKER="$p"; break; fi
+done
+if [[ -z "$PICKER" ]]; then
+  say "No menu program found — installing fuzzel (small, Wayland-native)."
+  missing+=("fuzzel")
+fi
 
 if (( ${#missing[@]} )); then
   say "Installing missing packages via pacman: ${missing[*]}"
@@ -30,7 +56,7 @@ if (( ${#missing[@]} )); then
     "wl-copy:wl-clipboard"
     "notify-send:libnotify"
     "hyprctl:hyprland"
-    "walker:walker"
+    "fuzzel:fuzzel"
     "curl:curl"
     "jq:jq"
     "python3:python"
@@ -46,6 +72,8 @@ if (( ${#missing[@]} )); then
     sudo pacman -S --needed "${pkgs[@]}"
   fi
 fi
+
+[[ -n "$PICKER" ]] && say "Action menu will use: $PICKER"
 
 python3 -c "import gi; gi.require_version('Gtk','4.0'); from gi.repository import Gtk" \
   2>/dev/null || die "python-gobject + gtk4 missing. Install: sudo pacman -S python-gobject gtk4"
@@ -104,16 +132,32 @@ case ":$PATH:" in
      ;;
 esac
 
-# 5. Hyprland conf symlink + source line
-say "Installing Hyprland conf"
+# 5. Hyprland config symlink + load line
+say "Installing Hyprland config ($HYPR_PROVIDER provider)"
 ln -sfn "$HYPR_SRC" "$HYPR_DST"
+
+# An upgrade that switches providers leaves the old file loaded by nothing.
+# Clear it out so it can't be mistaken for the live config later.
+if [[ "$HYPR_PROVIDER" == "lua" && -L "$HOME/.config/hypr/translateonthego.conf" ]]; then
+  rm -f "$HOME/.config/hypr/translateonthego.conf"
+  say "Removed the orphaned .conf symlink (this setup uses the lua provider)"
+fi
+if [[ -f "$HOME/.config/hypr/hyprland.conf" ]] && [[ "$HYPR_PROVIDER" == "lua" ]] \
+   && grep -qxF "source = ~/.config/hypr/translateonthego.conf" "$HOME/.config/hypr/hyprland.conf" 2>/dev/null; then
+  warn "~/.config/hypr/hyprland.conf still has the old 'source =' line, but this"
+  warn "setup loads hyprland.lua. The stale line is harmless; remove it if you like."
+fi
 
 if [[ -f "$HYPR_MAIN" ]]; then
   if ! grep -qxF "$SOURCE_LINE" "$HYPR_MAIN"; then
-    printf '\n# TranslateOnTheGo\n%s\n' "$SOURCE_LINE" >> "$HYPR_MAIN"
-    say "Added source line to $HYPR_MAIN"
+    if [[ "$HYPR_PROVIDER" == "lua" ]]; then
+      printf '\n-- TranslateOnTheGo\n%s\n' "$SOURCE_LINE" >> "$HYPR_MAIN"
+    else
+      printf '\n# TranslateOnTheGo\n%s\n' "$SOURCE_LINE" >> "$HYPR_MAIN"
+    fi
+    say "Added load line to $HYPR_MAIN"
   else
-    say "Source line already present in $HYPR_MAIN"
+    say "Load line already present in $HYPR_MAIN"
   fi
 else
   warn "Hyprland config not found at $HYPR_MAIN — add manually: $SOURCE_LINE"

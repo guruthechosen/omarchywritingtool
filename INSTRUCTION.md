@@ -33,7 +33,7 @@ You need:
 Optional (the installer will install these for you if missing):
 
 - `wl-clipboard` — clipboard access on Wayland
-- `walker` — dmenu-style picker
+- a dmenu-style picker — any of `walker`, `omarchy-menu-select` (Omarchy 4+), `fuzzel`, `wofi`, `rofi`
 - `curl`, `jq` — API calls and JSON parsing
 - `libnotify` — desktop notifications
 - `python`, `python-gobject`, `gtk4` — review window
@@ -68,8 +68,8 @@ This does the following, idempotently:
 3. Creates `~/.config/translateonthego/` and copies `config.example` there as `config` (only if no config exists yet, so re-running never clobbers your key).
 4. Symlinks `~/.local/bin/translateonthego` and `~/.local/bin/tot-llm` → this repo, so you can run both commands from anywhere. Warns if `~/.local/bin` isn't on your `PATH`.
 5. Symlinks `~/.config/systemd/user/ollama.service` → this repo's user unit for local models. **Installed but never enabled** — it has no `[Install]` section, so it cannot autostart at boot or login. Warns if the distro's *system* `ollama.service` is enabled.
-6. Symlinks `~/.config/hypr/translateonthego.conf` → this repo's Hyprland config (keybind + window rules).
-7. Appends `source = ~/.config/hypr/translateonthego.conf` to `~/.config/hypr/hyprland.conf` (skipped if already present).
+6. Detects which Hyprland config provider you use (`hyprctl systeminfo | grep configProvider`) and symlinks the matching file — `translateonthego.lua` for the **lua** provider (Omarchy 4+), `translateonthego.conf` for the classic one.
+7. Appends the matching load line to `hyprland.lua` (`require("hypr.translateonthego")`) or `hyprland.conf` (`source = ...`), skipped if already present. On a lua setup it also clears away the orphaned `.conf` symlink from an older install.
 8. Runs `hyprctl reload` so Hyprland picks up the new config.
 
 It installs nothing outside your home directory except the packages in step 1, and everything it does is reversible with `bash uninstall.sh` — see [UNINSTALL.md](UNINSTALL.md).
@@ -253,7 +253,7 @@ Prefer **Option B** for new setups — it's a fraction of the footprint and does
 1. Open any app where you can select text — a browser, editor, terminal, chat app. (For your first test, avoid LibreOffice — see the note below.)
 2. Select a sentence or paragraph.
 3. Press **`Super + H`**.
-4. A walker popup appears with three options: **Translate** / **Proofread** / **Correct**. Pick one (arrow keys + Enter, or click).
+4. Your picker pops up with three options: **Translate** / **Proofread** / **Correct**. Pick one (arrow keys + Enter, or click).
 5. Wait 1–3 seconds while the API is called.
 6. A review window opens showing:
    - **Original** on top (read-only)
