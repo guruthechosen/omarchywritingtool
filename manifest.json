@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "io.github.guruthechosen.translateonthego",
+  "name": "TranslateOnTheGo",
+  "version": "1.0.0",
+  "author": "guruthechosen",
+  "license": "MIT",
+  "description": "Translate, proofread, and correct selected text with Gemini, Ollama, or LM Studio from the Omarchy bar.",
+  "kinds": ["bar-widget"],
+  "entryPoints": {
+    "barWidget": "WritingTools.qml"
+  },
+  "barWidget": {
+    "displayName": "Writing Tools",
+    "category": "Productivity",
+    "allowMultiple": false,
+    "defaultSection": "right"
+  }
+}

@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+PROJ_DIR="$(dirname "$(dirname "$(readlink -f "$0")")")"
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/translateonthego"
+CONFIG="$CONFIG_DIR/config"
+
+fail() {
+  printf 'TranslateOnTheGo: %s\n' "$*" >&2
+  if command -v notify-send >/dev/null 2>&1; then
+    notify-send -u critical "TranslateOnTheGo" "$*" || true
+  fi
+  exit 1
+}
+
+check_dependencies() {
+  local cmd picker="" missing=()
+  for cmd in curl jq wl-paste wl-copy notify-send python3; do
+    command -v "$cmd" >/dev/null 2>&1 || missing+=("$cmd")
+  done
+  for cmd in walker omarchy-menu-select fuzzel wofi rofi; do
+    if command -v "$cmd" >/dev/null 2>&1; then picker="$cmd"; break; fi
+  done
+  [[ -n "$picker" ]] || missing+=("a menu picker (omarchy-menu-select or fuzzel)")
+  (( ${#missing[@]} == 0 )) || fail "Missing: ${missing[*]}. See PLUGIN.md for packages."
+  python3 -c "import gi; gi.require_version('Gtk', '4.0'); from gi.repository import Gtk" \
+    2>/dev/null || fail "GTK4 support missing. Install python-gobject and gtk4; see PLUGIN.md."
+}
+
+setup_config() {
+  if [[ -f "$CONFIG" ]]; then
+    printf 'Keeping existing config: %s\n' "$CONFIG"
+    return
+  fi
+  [[ ! -e "$CONFIG" && ! -L "$CONFIG" ]] || fail "Config path already exists: $CONFIG"
+  # noclobber also protects against another setup creating the file meanwhile.
+  (umask 077; mkdir -p "$CONFIG_DIR"; set -o noclobber; cat "$PROJ_DIR/config.example" > "$CONFIG") \
+    || fail "Could not create config: $CONFIG"
+  printf 'Created %s (mode 600). Configure a provider before using Writing Tools.\n' "$CONFIG"
+}
+
+case "${1:-}" in
+  --check)
+    [[ $# == 1 ]] || fail "Usage: bash bin/tot-plugin [--check|--setup]"
+    check_dependencies
+    printf 'Writing Tools dependencies are available.\n'
+    ;;
+  --setup)
+    [[ $# == 1 ]] || fail "Usage: bash bin/tot-plugin [--check|--setup]"
+    setup_config
+    ;;
+  "")
+    [[ $# == 0 ]] || fail "Usage: bash bin/tot-plugin [--check|--setup]"
+    check_dependencies
+    [[ -f "$CONFIG" ]] || fail "Configure Writing Tools first: bash \"$PROJ_DIR/bin/tot-plugin\" --setup; then edit $CONFIG"
+    exec bash "$PROJ_DIR/bin/translateonthego"
+    ;;
+  *) fail "Usage: bash bin/tot-plugin [--check|--setup]" ;;
+esac

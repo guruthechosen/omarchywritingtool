@@ -144,7 +144,7 @@ if [[ "$HYPR_PROVIDER" == "lua" && -L "$HOME/.config/hypr/translateonthego.conf"
 fi
 if [[ -f "$HOME/.config/hypr/hyprland.conf" ]] && [[ "$HYPR_PROVIDER" == "lua" ]] \
    && grep -qxF "source = ~/.config/hypr/translateonthego.conf" "$HOME/.config/hypr/hyprland.conf" 2>/dev/null; then
-  warn "~/.config/hypr/hyprland.conf still has the old 'source =' line, but this"
+  warn "$HOME/.config/hypr/hyprland.conf still has the old 'source =' line, but this"
   warn "setup loads hyprland.lua. The stale line is harmless; remove it if you like."
 fi
 
@@ -165,7 +165,11 @@ fi
 
 # 6. Reload Hyprland
 if command -v hyprctl >/dev/null 2>&1; then
-  hyprctl reload >/dev/null 2>&1 && say "Hyprland reloaded" || warn "hyprctl reload failed"
+  if hyprctl reload >/dev/null 2>&1; then
+    say "Hyprland reloaded"
+  else
+    warn "hyprctl reload failed"
+  fi
 fi
 
 cat <<EOF

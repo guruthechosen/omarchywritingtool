@@ -5,7 +5,11 @@
 When you trigger an action, the selected text is sent to whichever provider you configured:
 
 - `PROVIDER="gemini"` — your text goes to **Google's Gemini API** over HTTPS. It leaves your machine. Read Google's terms before using it on anything confidential.
-- `PROVIDER="ollama"` / `"lmstudio"` — your text goes to a server on **localhost only**. Nothing leaves the machine.
+- `PROVIDER="ollama"` / `"lmstudio"` — your text goes to the configured server, which defaults to **localhost**. A remote endpoint sends text to that host.
+
+When `FALLBACK_ENABLED="true"` (the default) and a Gemini key is set, a failed
+local request is retried with Gemini. Set `FALLBACK_ENABLED="false"` for local-only
+use. A notification announces fallback before the cloud request.
 
 There is no telemetry, no analytics, and no update check. The only outbound network calls are the provider request you asked for.
 
@@ -15,12 +19,15 @@ Text is written to temporary files (`mktemp`) while the review window is open, a
 
 `~/.config/translateonthego/config` is sourced as bash and typically holds `GEMINI_API_KEY`. Consequences worth knowing:
 
-- **`install.sh` sets it to mode `600`.** Keep it that way. Check with `stat -c '%a' ~/.config/translateonthego/config`.
+- **`install.sh` and `bin/tot-plugin --setup` create it with mode `600`.** Keep it that way. Check with `stat -c '%a' ~/.config/translateonthego/config`.
 - **It is sourced, not parsed.** Anything executable in that file runs with your privileges every time the keybind fires. Don't paste config snippets you don't understand.
 - **It is deliberately outside the repo.** `config` is in `.gitignore`; only `config.example` is tracked. Never move your real key into the repo.
 - If a key leaks, rotate it immediately at <https://aistudio.google.com/apikey>.
 
 ## The local model server
+
+The native plugin does not install or start any model service. The systemd
+integration below applies only to the standalone `install.sh` installation.
 
 `systemd/ollama.service` binds to `OLLAMA_HOST=127.0.0.1:11434` — **loopback only**.
 

@@ -32,11 +32,20 @@ XDG_CONFIG_HOME=/tmp/tot-dev ./bin/translateonthego
 
 ## Testing your changes
 
-There is no automated test suite — it's a UI-driven tool. At minimum, before opening a PR:
+The plugin has isolated setup/launch regression tests:
+
+```bash
+python3 -m unittest discover -s tests -v
+# On an Omarchy Quattro machine, also validate the manifest and QML:
+bash scripts/validate-plugin.sh
+```
+
+These tests do not make provider requests or touch your desktop settings.
+For live UI/provider changes, also check the following before opening a PR:
 
 ```bash
 # 1. Everything parses
-for f in bin/translateonthego bin/tot-llm lib/*.sh install.sh uninstall.sh; do bash -n "$f"; done
+for f in bin/translateonthego bin/tot-llm bin/tot-plugin lib/*.sh install.sh uninstall.sh scripts/*.sh; do bash -n "$f"; done
 
 # 2. Each action round-trips through the provider you touched
 printf 'The quick brown fox jump over a lazy dogs.' > /tmp/t.txt
@@ -48,10 +57,12 @@ printf 'The quick brown fox jump over a lazy dogs.' > /tmp/t.txt
 #    Select text somewhere, press Super+H, run all three actions.
 
 # 4. Install is still reversible
+#    Use a disposable desktop/config for standalone install/uninstall checks.
 bash uninstall.sh && bash install.sh
 ```
 
 Test on a **fresh clone** too — it's easy to accidentally depend on state your working copy already has.
+For the plugin release smoke test and submission draft, see [PUBLISHING.md](PUBLISHING.md).
 
 ## Adding a provider
 

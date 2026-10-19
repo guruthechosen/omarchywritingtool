@@ -1,6 +1,15 @@
 # Uninstall / Full Revert Guide
 
-Two paths: run the script (easy), or do it manually (for peace of mind, or if the script fails).
+For a **plugin-only installation**, close any Writing Tools window and run:
+
+```bash
+omarchy plugin remove io.github.guruthechosen.translateonthego
+```
+
+This preserves provider config and models. See [PLUGIN.md](PLUGIN.md#disable-or-remove)
+for details. Do not run the standalone uninstaller for a plugin-only install.
+
+For a **standalone installation**, run the script or follow the manual steps below.
 
 ---
 

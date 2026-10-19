@@ -47,6 +47,28 @@ Not yet — contributions welcome. An action-menu shot and a review-window shot 
 
 ## Installation
 
+### Omarchy Quattro plugin
+
+The native plugin adds a **Writing** button to the bar and uses the same
+providers and GTK4 review window. See **[PLUGIN.md](PLUGIN.md)** for dependencies,
+provider setup, updates, and removal.
+
+```bash
+omarchy plugin add https://github.com/guruthechosen/omarchywritingtool.git --enable
+PLUGIN_DIR="$HOME/.config/omarchy/plugins/io.github.guruthechosen.translateonthego"
+bash "$PLUGIN_DIR/bin/tot-plugin" --check
+bash "$PLUGIN_DIR/bin/tot-plugin" --setup
+```
+
+Configure your provider in `${XDG_CONFIG_HOME:-$HOME/.config}/translateonthego/config`,
+then select text and click **Writing**. Existing config is preserved. Plugin
+installation does not run the standalone installer or configure `Super+H`.
+
+Remove with `omarchy plugin remove io.github.guruthechosen.translateonthego`.
+Your provider config and local models are retained.
+
+### Standalone Hyprland tool
+
 ```bash
 git clone https://github.com/guruthechosen/omarchywritingtool.git
 cd omarchywritingtool
@@ -179,6 +201,7 @@ Sizes are quantized download sizes from <https://ollama.com/library> and drift o
 ```
 omarchywritingtool/
 ├── bin/
+│   ├── tot-plugin          # plugin launcher, dependency check, and config setup
 │   ├── translateonthego    # main entry (bash)
 │   ├── tot-llm             # start/stop/pull for the local Ollama server
 │   └── tot-review.py       # GTK4 review window
@@ -192,6 +215,10 @@ omarchywritingtool/
 ├── hypr/
 │   └── translateonthego.conf   # Hyprland keybind + window rules
 ├── config.example          # config template
+├── manifest.json           # Omarchy marketplace metadata
+├── WritingTools.qml        # native Quattro bar launcher
+├── PLUGIN.md               # plugin setup, usage, and removal
+├── PUBLISHING.md           # release checks and marketplace submission
 ├── install.sh              # idempotent installer
 ├── uninstall.sh            # reverts install.sh
 ├── INSTRUCTION.md          # step-by-step setup

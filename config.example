@@ -4,13 +4,14 @@
 # ---- Provider selection ----
 # "gemini"   — Google Gemini API (needs GEMINI_API_KEY). Daily driver.
 # "ollama"   — Local Ollama server (no key, no network, private).
-#              You start it by hand: `tot-llm start`. Never runs at boot.
+#              Start it yourself: `ollama serve`, or `tot-llm start` if you
+#              installed the standalone systemd integration.
 # "lmstudio" — Local LM Studio server (legacy; prefer "ollama").
 PROVIDER="gemini"
 
 # ---- Gemini settings ----
-# Preferred: export GEMINI_API_KEY in your shell env.
-# Or store it here (chmod 600 this file).
+# Store the key here (chmod 600 this file), or export it in the environment
+# inherited by the Omarchy shell. A terminal's shell rc may not reach the bar.
 # GEMINI_API_KEY="your-key-here"
 # Measured on short paragraphs: flash-lite ~1.0s, 3.6-flash ~2.8s, and the
 # non-lite 3.5-flash ~13s (it reasons before answering — too slow for a keybind).
@@ -24,7 +25,8 @@ MODEL="gemini-3.5-flash-lite"
 # Endpoint. Loopback only — this server has no auth, never bind it publicly.
 OLLAMA_HOST="127.0.0.1:11434"
 
-# Model tag. Pull it with: tot-llm pull
+# Model tag. Pull it with: ollama pull <tag> (requires a running server).
+# Standalone installations can also use: tot-llm pull
 # Pick one that FITS YOUR VRAM, leaving ~1-2GB headroom for the KV cache —
 # a model that doesn't fit spills onto the CPU and gets slow.
 #   4-6GB VRAM   gemma4:e2b-it-qat   4.3GB   or  qwen3.5:2b   1.9GB

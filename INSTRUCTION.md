@@ -4,6 +4,11 @@ Step-by-step guide to get **TranslateOnTheGo** running on your machine.
 
 For an overview of what this tool does, see [README.md](README.md). For reverting/uninstalling, see [UNINSTALL.md](UNINSTALL.md).
 
+**Installing through Omarchy's plugin manager? Follow [PLUGIN.md](PLUGIN.md).**
+The steps below install the standalone keybinding and optional Ollama service.
+Plugin users can reuse the provider configuration section without running
+`install.sh`.
+
 ---
 
 ## Table of Contents
