@@ -12,8 +12,6 @@ URL="${LMSTUDIO_URL:-http://localhost:1234/v1/chat/completions}"
 MODEL_ID="${LMSTUDIO_MODEL:-local-model}"
 TARGET_LANG="${TARGET_LANG:-Korean}"
 
-TEXT="$(cat "$TEXT_FILE")"
-
 if ! SYSTEM="$(tot_system_prompt "$ACTION" "$TARGET_LANG")"; then
   echo "Unknown action: $ACTION" >&2
   exit 2
@@ -22,7 +20,7 @@ fi
 BODY="$(jq -n \
   --arg model "$MODEL_ID" \
   --arg sys "$SYSTEM" \
-  --arg user "$TEXT" \
+  --rawfile user "$TEXT_FILE" \
   '{
     model: $model,
     messages: [
@@ -33,9 +31,9 @@ BODY="$(jq -n \
     stream: false
   }')"
 
-RESP="$(curl -sS --connect-timeout 3 --max-time 120 -X POST "$URL" \
+RESP="$(printf '%s' "$BODY" | curl -sS --connect-timeout 3 --max-time 120 -X POST "$URL" \
   -H 'Content-Type: application/json' \
-  -d "$BODY")" || {
+  --data-binary @-)" || {
     echo "LM Studio unreachable at $URL — is the server running?" >&2
     exit 1
   }

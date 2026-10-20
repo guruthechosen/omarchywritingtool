@@ -41,6 +41,15 @@ fallback can send failed local requests to Gemini when a key is configured;
 FALLBACK_ENABLED=false disables that behavior. No telemetry or remote build.
 No preview assets are included.
 
+Version 1.0.1 addresses the process-argument exposure reported in review. All
+three providers load selected text with jq --rawfile and stream request JSON
+to curl through stdin. Gemini supplies its API-key header through a Bash pipe
+instead of a command argument. Regression tests use real jq/curl against a
+loopback fixture, inspect curl's live /proc command line and every jq/curl
+invocation, and cover all three actions/providers, large inputs, and errors.
+All 17 tests and ShellCheck pass; no real API key or external provider is used
+by the tests.
+
 ### Submission checklist
 
 - [x] The repository is public and contains installation and removal instructions.

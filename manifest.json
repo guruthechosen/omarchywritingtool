@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "io.github.guruthechosen.translateonthego",
   "name": "TranslateOnTheGo",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "guruthechosen",
   "license": "MIT",
   "description": "Translate, proofread, and correct selected text with Gemini, Ollama, or LM Studio from the Omarchy bar.",

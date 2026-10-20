@@ -22,8 +22,6 @@ NUM_CTX="${OLLAMA_NUM_CTX:-8192}"
 # pass. Left off by default: models without thinking support reject the field.
 NO_THINK="${OLLAMA_NO_THINK:-false}"
 
-TEXT="$(cat "$TEXT_FILE")"
-
 if ! SYSTEM="$(tot_system_prompt "$ACTION" "$TARGET_LANG")"; then
   echo "Unknown action: $ACTION" >&2
   exit 2
@@ -32,7 +30,7 @@ fi
 BODY="$(jq -n \
   --arg model "$MODEL_ID" \
   --arg sys "$SYSTEM" \
-  --arg user "$TEXT" \
+  --rawfile user "$TEXT_FILE" \
   --arg keep "$KEEP_ALIVE" \
   --argjson ctx "$NUM_CTX" \
   --argjson nothink "$NO_THINK" \
@@ -50,9 +48,9 @@ BODY="$(jq -n \
 
 # curl's own transport error is suppressed — the message below is more useful,
 # and anything the server actually returns comes back in $RESP.
-RESP="$(curl -sS --connect-timeout 3 --max-time 180 -X POST "$URL" \
+RESP="$(printf '%s' "$BODY" | curl -sS --connect-timeout 3 --max-time 180 -X POST "$URL" \
   -H 'Content-Type: application/json' \
-  -d "$BODY" 2>/dev/null)" || {
+  --data-binary @- 2>/dev/null)" || {
     echo "Ollama unreachable at $URL — start it with: tot-llm start" >&2
     exit 1
   }

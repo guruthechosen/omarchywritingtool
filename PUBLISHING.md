@@ -11,7 +11,7 @@ its current commit and receiving maintainer approval. Reference:
 - Repository: https://github.com/guruthechosen/omarchywritingtool
 - Plugin ID: `io.github.guruthechosen.translateonthego`
 - Name: TranslateOnTheGo
-- Initial plugin version: `1.0.0`
+- Current plugin version: `1.0.1`
 - Author: guruthechosen
 - License: MIT
 - Category: Productivity
@@ -56,6 +56,11 @@ Preparation checks on 2026-10-19 passed on Omarchy `4.0.4-1`, Quickshell `0.3.1`
 The offscreen test does not establish live bar placement, selection capture,
 or a provider round-trip. No real provider request was made during preparation.
 
+Version `1.0.1` addresses the marketplace review's process-argument exposure
+finding. On 2026-10-20, all 17 tests and ShellCheck passed, including all three
+providers/actions against a loopback server using synthetic credentials and
+inspection of live curl command lines. No external provider request was made.
+
 ## Release sequence
 
 1. Review the changes, keep the root manifest/README/license, and ensure there
@@ -70,7 +75,7 @@ or a provider round-trip. No real provider request was made during preparation.
    clipboard fallback, disable/re-enable, and a shell restart. Close review
    windows, remove via `omarchy plugin remove`, and confirm config is retained.
    This launcher has no shell summon/hide panel interface.
-3. Commit and push the reviewed changes to `main`. A `v1.0.0` tag/release is
+3. Commit and push the reviewed changes to `main`. A `v1.0.1` tag/release is
    optional; the marketplace validates the repository's current commit.
 4. Install from the public URL using [PLUGIN.md](PLUGIN.md) to confirm a fresh
    clone contains the same files. Record the published commit with

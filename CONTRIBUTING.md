@@ -32,7 +32,7 @@ XDG_CONFIG_HOME=/tmp/tot-dev ./bin/translateonthego
 
 ## Testing your changes
 
-The plugin has isolated setup/launch regression tests:
+The plugin has setup/launch and provider privacy regression tests:
 
 ```bash
 python3 -m unittest discover -s tests -v
@@ -40,7 +40,9 @@ python3 -m unittest discover -s tests -v
 bash scripts/validate-plugin.sh
 ```
 
-These tests do not make provider requests or touch your desktop settings.
+These tests use synthetic text and keys with a loopback HTTP server, real jq/curl,
+and Linux `/proc` command-line inspection. They do not contact external providers
+or touch your desktop settings. Install `jq` and `curl` before running them.
 For live UI/provider changes, also check the following before opening a PR:
 
 ```bash

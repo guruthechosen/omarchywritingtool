@@ -15,6 +15,15 @@ There is no telemetry, no analytics, and no update check. The only outbound netw
 
 Text is written to temporary files (`mktemp`) while the review window is open, and deleted when it closes. The result is placed on your clipboard, where it stays until something overwrites it.
 
+Provider scripts read selected text with `jq --rawfile` and pass request JSON
+to curl over standard input. Gemini's API-key header is supplied through a
+Bash process-substitution pipe. Neither the key nor selected text is placed in
+jq/curl command arguments. This protects ordinary process listings, not access
+by root or other processes running with your own user privileges.
+
+Versions through `1.0.0` passed the API key and request text in process arguments.
+Update to `1.0.1` or later to remove that exposure.
+
 ## Your API key
 
 `~/.config/translateonthego/config` is sourced as bash and typically holds `GEMINI_API_KEY`. Consequences worth knowing:
