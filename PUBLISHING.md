@@ -11,7 +11,7 @@ its current commit and receiving maintainer approval. Reference:
 - Repository: https://github.com/guruthechosen/omarchywritingtool
 - Plugin ID: `io.github.guruthechosen.translateonthego`
 - Name: TranslateOnTheGo
-- Current plugin version: `1.0.1`
+- Current plugin version: `1.0.2`
 - Author: guruthechosen
 - License: MIT
 - Category: Productivity
@@ -19,11 +19,31 @@ its current commit and receiving maintainer approval. Reference:
 - Issue title: `[Plugin]: TranslateOnTheGo`
 - Issue body: [docs/marketplace-submission.md](docs/marketplace-submission.md)
 
-The ID is permanent once listed. Neither this ID nor this repository appeared
-in the marketplace registry when checked on 2026-10-19; recheck at submission.
-The repository was confirmed public, with `main` as its default branch.
-No preview is required for the first listing. Add a genuine `preview.png` of
-the widget/review window later if desired, with no private text or keys visible.
+The ID is permanent. The plugin is listed and verified through
+[the original submission](https://github.com/omacom/omarchy-plugin-marketplace/issues/12169).
+The repository is public, with `main` as its default branch.
+
+The root `preview.png` is the marketplace image. Additional actual GTK4 captures
+live in `docs/screenshots/`; see [the capture notes](docs/screenshots/README.md).
+All examples use prepared fictional text. Do not include personal documents,
+clipboard contents, API keys, or account settings in future captures.
+
+## Updating the existing listing
+
+Push the reviewed commit, then open a **new**
+[verification/update request](https://github.com/omacom/omarchy-plugin-marketplace/issues/new?template=verify-plugin.yml)
+with action **Verify and publish a newer upstream commit**, the plugin ID,
+repository URL, and full 40-character target commit. Confirm the exact-snapshot
+acknowledgment. Do not claim setup-free installation: provider configuration
+and dependencies are still required.
+
+The current verified snapshot remains published until maintainers approve the
+new snapshot. A push alone does not publish the new description or preview.
+The site reads the manifest description (up to 500 characters) and the root
+preview image; detailed instructions and extra screenshots belong in the README.
+
+Version `1.0.2` updates only listing metadata, documentation, and screenshots.
+It does not change runtime behavior.
 
 ## Local validation
 
@@ -61,7 +81,7 @@ finding. On 2026-10-20, all 17 tests and ShellCheck passed, including all three
 providers/actions against a loopback server using synthetic credentials and
 inspection of live curl command lines. No external provider request was made.
 
-## Release sequence
+## Initial submission reference
 
 1. Review the changes, keep the root manifest/README/license, and ensure there
    are no credentials, local config, symlinks, or temporary files in the commit.
@@ -75,7 +95,7 @@ inspection of live curl command lines. No external provider request was made.
    clipboard fallback, disable/re-enable, and a shell restart. Close review
    windows, remove via `omarchy plugin remove`, and confirm config is retained.
    This launcher has no shell summon/hide panel interface.
-3. Commit and push the reviewed changes to `main`. A `v1.0.1` tag/release is
+3. Commit and push the reviewed changes to `main`. A matching version tag/release is
    optional; the marketplace validates the repository's current commit.
 4. Install from the public URL using [PLUGIN.md](PLUGIN.md) to confirm a fresh
    clone contains the same files. Record the published commit with

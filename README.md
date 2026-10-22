@@ -4,42 +4,81 @@
 [![Platform: Hyprland / Arch](https://img.shields.io/badge/platform-Hyprland%20%2F%20Arch-1793d1)](https://hyprland.org)
 [![Provider: Gemini + Ollama](https://img.shields.io/badge/provider-Gemini%20%7C%20Ollama-4285F4)](#configuration)
 
-Apple-style Writing Tools for Hyprland / Omarchy / Arch. Select text anywhere, hit a keybind, get **Translate / Proofread / Correct** powered by Gemini or a local LLM. Minimal GTK4 review window, result goes to clipboard.
+Writing tools for your **Omarchy bar**. Translate a message, polish a draft, or fix
+typos without moving your text into a separate chat. Select text, click
+**Writing**, choose an action, then review and edit the result before copying
+it back into your app.
 
-No right-click menus on Wayland — so a Hyprland keybind is the closest idiom. Pick text → `Super + H` → action → review → paste.
+Works with **Gemini**, **Ollama**, or **LM Studio**. Also available as a
+standalone Hyprland tool with an optional `Super+H` shortcut.
 
-> The repo is `omarchywritingtool`; the tool it installs is called `translateonthego`. Same thing.
+[Install the plugin](#omarchy-quattro-plugin) · [Provider setup](PLUGIN.md#install-and-configure) · [Marketplace listing](https://plugins.omarchy.org/plugin.html?id=io.github.guruthechosen.translateonthego)
 
----
+![TranslateOnTheGo: translate, proofread, and correct from the Omarchy bar, with the actual review window](preview.png)
 
-## Features
+## What can it do?
 
-- **Global trigger** via Hyprland keybind (`Super + H` by default) over your PRIMARY selection. Falls back to the clipboard when no selection is available — and tells you when it did, so a stale clipboard never masquerades as your selection. (See [LibreOffice](#libreoffice-and-other-apps-that-dont-publish-selections).)
-- **Three actions** via whichever dmenu-style picker you already have (walker, Omarchy's menu, fuzzel, wofi, rofi):
-  - **Translate** — translate to your target language (Korean by default). If already in that language, translates to English.
-  - **Proofread** — improve grammar, clarity, flow, naturalness. Keeps original language and tone.
-  - **Correct** — fix only grammar / spelling / punctuation. No rephrasing.
-- **Providers, swap with one config line:**
-  - **Gemini** (`gemini-3.5-flash-lite` by default) — fast, cheap, free tier is plenty for personal use. The daily driver.
-  - **Ollama** — a local model on your own GPU. Zero API cost, offline, private. Runs **only when you start it** (`tot-llm start`); it never autostarts at boot and stopping it frees the VRAM completely.
-  - **LM Studio** — still supported, but Ollama is the lighter local option.
-- **Minimal GTK4 review window** — original (read-only) + result (editable, so you can tweak before applying). `Ctrl+Enter` to copy, `Esc` to cancel.
-- **Clipboard-based paste** — result goes to clipboard; you paste with `Ctrl+V` (or `Ctrl+Shift+V` in terminals). Reliable across every app; no flaky auto-paste.
+| Action | Use it for | What it asks the model to do |
+| --- | --- | --- |
+| **Translate** | Messages, emails, and passages in another language | Translate into your configured target language (Korean by default). Text already in that language is translated into English. |
+| **Proofread** | A draft that needs to read more naturally | Improve grammar, clarity, and flow while preserving the original language, meaning, and tone. |
+| **Correct** | Typos and grammar fixes with minimal rewriting | Fix spelling, grammar, and punctuation while preserving your wording as much as possible. |
 
----
+The original stays visible above an **editable result**. Review the output,
+make any final changes, and click **Copy to Clipboard** (`Ctrl+Enter`). Paste
+with `Ctrl+V`, or `Ctrl+Shift+V` in a terminal. `Esc` cancels.
+
+## Everyday workflow
+
+1. Select the text you want to work on in your browser, editor, or another app.
+2. Click **Writing** in the Omarchy bar (**Aa** on a vertical bar).
+3. Choose **Translate**, **Proofread**, or **Correct** from your menu picker.
+4. Review and optionally edit the result, then copy and paste it back.
+
+If an app does not expose its selection, press `Ctrl+C` first. The tool tries
+the PRIMARY selection before the clipboard; the review window warns when it
+uses clipboard contents. Always check that the original shown is the text you
+intended. The plugin does not replace text in your app automatically.
 
 ## Screenshots
 
-Not yet — contributions welcome. An action-menu shot and a review-window shot would cover it.
+### Proofread a draft
+
+Compare the original with the editable result before copying it back.
+
+![Proofread review showing a sample launch update before and after editing](docs/screenshots/proofread.png)
+
+### Translate a message
+
+This example shows English to Korean. Change `TARGET_LANG` in your config to
+choose another target language.
+
+![Translate review showing a sample English message and a Korean translation](docs/screenshots/translate.png)
+
+Screenshots show the actual GTK4 review window with prepared, fictional sample
+input and output. They illustrate the interface, not a provider benchmark.
+The appearance follows your GTK theme; the action picker follows your installed
+menu tool.
+
+## Choose your provider
+
+- **Gemini** sends the chosen text to Google's API and requires your own API key.
+- **Ollama** uses a running server and a downloaded model. With a localhost
+  endpoint, processing runs on your machine.
+- **LM Studio** uses its running local server with a model loaded.
+
+For local-only operation, set `FALLBACK_ENABLED="false"`. Otherwise, a failed
+local request can fall back to Gemini when a Gemini key is configured. Provider
+setup is required after installing the plugin; see [the plugin guide](PLUGIN.md).
 
 ---
 
 ## Requirements
 
 - **Omarchy / Arch Linux** with **Hyprland** (Wayland compositor)
-- `wl-clipboard`, `curl`, `jq`, `libnotify`, `python`, `python-gobject`, `gtk4` — the installer will install any that are missing via `pacman`.
-- **A dmenu-style picker** — any one of `walker`, `omarchy-menu-select` (ships with Omarchy 4+), `fuzzel`, `wofi`, or `rofi`. The installer uses whichever it finds and only installs `fuzzel` if you have none.
-- **For Gemini**: a Google Gemini API key — free tier at <https://aistudio.google.com/apikey>
+- `wl-clipboard`, `curl`, `jq`, `libnotify`, `python`, `python-gobject`, `gtk4` — install missing dependencies explicitly for the plugin; the standalone installer can install them via `pacman`.
+- **A dmenu-style picker** — any one of `walker`, `omarchy-menu-select` (ships with Omarchy 4+), `fuzzel`, `wofi`, or `rofi`. The tool uses whichever it finds. The standalone installer can install `fuzzel` if you have none.
+- **For Gemini**: your own [Google Gemini API key](https://aistudio.google.com/apikey)
 - **For Ollama**: `sudo pacman -S --needed ollama ollama-cuda` (or `ollama-vulkan` / `ollama-rocm` / plain `ollama` for CPU), plus enough VRAM for your chosen model
 - **For LM Studio**: [LM Studio](https://lmstudio.ai/) with a chat model loaded and its local server running (default port `1234`)
 
@@ -108,13 +147,13 @@ Edit one line:
 
 ```bash
 PROVIDER="gemini"     # cloud, needs API key
-PROVIDER="ollama"     # local, needs `tot-llm start`
+PROVIDER="ollama"     # needs a running Ollama server
 PROVIDER="lmstudio"   # local, needs LM Studio running
 ```
 
 Typical workflow: Gemini as daily driver, switch to a local model when hitting quota, going offline, or handling text you'd rather not send anywhere.
 
-**Auto-fallback:** If a local provider is selected but its server isn't running, the tool falls back to Gemini automatically (if `GEMINI_API_KEY` is set). A toast tells you it fell back. Disable with `FALLBACK_ENABLED="false"` in config if you want hard failure instead.
+**Auto-fallback:** If a request to a local provider fails, the tool falls back to Gemini automatically (if `GEMINI_API_KEY` is set). A toast tells you it fell back. Disable with `FALLBACK_ENABLED="false"` in config if you want hard failure instead.
 
 ### Changing the keybind
 
@@ -140,9 +179,12 @@ Change the key to taste, then `hyprctl reload`.
 
 ---
 
-## Local models (`tot-llm`)
+## Local models (`tot-llm`, standalone installation)
 
-The local server is **manual-only by design**: nothing is enabled at boot, and stopping it releases both VRAM and RAM. It ships as a *user* systemd unit (`~/.config/systemd/user/ollama.service`) that is installed but never `enable`d.
+The standalone installer provides the `tot-llm` commands below. Plugin-only users
+should manage their Ollama server directly (for example, `ollama serve`).
+
+The standalone local server is **manual-only by design**: nothing is enabled at boot, and stopping it releases both VRAM and RAM. It ships as a *user* systemd unit (`~/.config/systemd/user/ollama.service`) that is installed but never `enable`d.
 
 ```bash
 tot-llm pull            # download the configured model
@@ -188,8 +230,8 @@ Sizes are quantized download sizes from <https://ollama.com/library> and drift o
 ## Usage
 
 1. Select text in any app (terminal, browser, editor). A few apps — LibreOffice notably — don't publish selections; there, press `Ctrl+C` first. See [below](#libreoffice-and-other-apps-that-dont-publish-selections).
-2. Press **`Super + H`**.
-3. Walker pops up — pick **Translate**, **Proofread**, or **Correct**.
+2. Click **Writing** in the bar, or press **`Super + H`** with the standalone installation.
+3. Your menu picker opens — pick **Translate**, **Proofread**, or **Correct**.
 4. Review window appears. Original on top, editable result below. Tweak if desired.
 5. **Copy to Clipboard** (or `Ctrl+Enter`).
 6. Back in your app, `Ctrl+V` (or `Ctrl+Shift+V` in terminals).

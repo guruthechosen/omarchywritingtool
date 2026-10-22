@@ -2,11 +2,13 @@
   "schemaVersion": 1,
   "id": "io.github.guruthechosen.translateonthego",
   "name": "TranslateOnTheGo",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": "guruthechosen",
   "license": "MIT",
-  "description": "Translate, proofread, and correct selected text with Gemini, Ollama, or LM Studio from the Omarchy bar.",
-  "kinds": ["bar-widget"],
+  "description": "Writing tools for your Omarchy bar. Select or copy text, click Writing, then Translate, Proofread, or Correct. Compare the original with an editable result, copy it, and paste it back into your app. Use Gemini with your own API key, or a running Ollama/LM Studio server. Provider setup required; disable Gemini fallback for local-only use.",
+  "kinds": [
+    "bar-widget"
+  ],
   "entryPoints": {
     "barWidget": "WritingTools.qml"
   },

@@ -6,6 +6,18 @@ editable result in the GTK4 window and copy it to your clipboard. If the app
 doesn't expose its selection, copy the text first; the review window identifies
 clipboard input. Vertical bars show **Aa**.
 
+![TranslateOnTheGo review window with a sample proofreading result](docs/screenshots/proofread.png)
+
+## Which action should I choose?
+
+- **Translate** changes the language. Set `TARGET_LANG` in config (default:
+  Korean); text already in that language is translated into English.
+- **Proofread** improves grammar, clarity, flow, and naturalness.
+- **Correct** asks for spelling, punctuation, and grammar fixes with minimal edits.
+
+[See both screenshots and the everyday workflow](README.md#screenshots).
+Screenshots use prepared sample text, not private documents or live requests.
+
 ## Requirements
 
 - Omarchy with the Quattro shell and `omarchy plugin` commands.
@@ -51,9 +63,15 @@ start it explicitly (for example, `ollama serve` in a terminal).
 
 ## Use and update
 
-Left-click **Writing** after selecting or copying text. Press Escape to cancel
-the action menu or review window. Copy the result with Ctrl+Enter and paste it
-into your application. Requests run only after you choose an action.
+1. Select text, or copy it with `Ctrl+C` if your app does not expose selections.
+2. Left-click **Writing** and choose an action. Only then is a request sent.
+3. Check the original shown in the review window. Clipboard input is marked
+   with a warning; PRIMARY selection takes priority when available.
+4. Edit the result if needed, then click **Copy to Clipboard** or press
+   `Ctrl+Enter`.
+5. Return to your app and paste with `Ctrl+V` (`Ctrl+Shift+V` in terminals).
+
+Press `Esc` to cancel the action menu or review window.
 
 The button launches an independent desktop tool. Disabling the widget or
 restarting the shell does not close an already open review window; close that
